@@ -46,10 +46,11 @@ type logger struct {
 }
 
 type logEntry struct {
-	Level       Level       `json:"level"`
-	Time        time.Time   `json:"time"`
-	Message     interface{} `json:"message"`
-	GofrVersion string      `json:"gofrVersion"`
+	Level       Level                  `json:"level"`
+	Time        time.Time              `json:"time"`
+	Message     interface{}            `json:"message"`
+	System      map[string]interface{} `json:"system"`
+	GofrVersion string                 `json:"gofrVersion"`
 }
 
 func (l *logger) logf(level Level, format string, args ...interface{}) {
@@ -66,6 +67,7 @@ func (l *logger) logf(level Level, format string, args ...interface{}) {
 		Level:       level,
 		Time:        time.Now(),
 		GofrVersion: version.Framework,
+		System:      fetchSystemStats(),
 	}
 
 	switch {
@@ -158,12 +160,14 @@ func (l *logger) prettyPrint(e logEntry, out io.Writer) {
 	// Pretty printing if the message interface defines a method PrettyPrint else print the log message
 	// This decouples the logger implementation from its usage
 	if fn, ok := e.Message.(PrettyPrint); ok {
-		fmt.Fprintf(out, "\u001B[38;5;%dm%s\u001B[0m [%s] ", e.Level.color(), e.Level.String()[0:4],
+		fmt.Fprintf(out, "\u001B[38;5;%dm%s\u001B[0m (Mem %v: GoR %v) [%s] ", e.Level.color(), e.Level.String()[0:4],
+			e.System["alloc"], e.System["goRoutines"],
 			e.Time.Format("15:04:05"))
 
 		fn.PrettyPrint(out)
 	} else {
-		fmt.Fprintf(out, "\u001B[38;5;%dm%s\u001B[0m [%s] ", e.Level.color(), e.Level.String()[0:4],
+		fmt.Fprintf(out, "\u001B[38;5;%dm%s\u001B[0m (Mem %v: GoR %v) [%s] ", e.Level.color(), e.Level.String()[0:4],
+			e.System["alloc"], e.System["goRoutines"],
 			e.Time.Format("15:04:05"))
 
 		fmt.Fprintf(out, "%v\n", e.Message)

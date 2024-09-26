@@ -27,8 +27,20 @@ func (r Responder) Respond(data interface{}, err error) {
 	var resp interface{}
 	switch v := data.(type) {
 	case resTypes.Raw:
+		if d, ok := data.(resTypes.Raw); ok {
+			if d.Cookie != nil {
+				http.SetCookie(r.w, d.Cookie)
+			}
+		}
+
 		resp = v.Data
 	case resTypes.File:
+		if d, ok := data.(resTypes.File); ok {
+			if d.Cookie != nil {
+				http.SetCookie(r.w, d.Cookie)
+			}
+		}
+
 		r.w.Header().Set("Content-Type", v.ContentType)
 		r.w.WriteHeader(statusCode)
 
@@ -110,4 +122,8 @@ func isNil(i any) bool {
 	v := reflect.ValueOf(i)
 
 	return v.Kind() == reflect.Ptr && v.IsNil()
+}
+
+func (r Responder) Header(key, value string) {
+	r.w.Header().Set(key, value)
 }

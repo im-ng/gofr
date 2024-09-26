@@ -90,3 +90,7 @@ func newContext(w Responder, r Request, c *container.Container) *Context {
 		Container: c,
 	}
 }
+
+func (c *Context) Header(key, value string) {
+	c.responder.Header(key, value)
+}

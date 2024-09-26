@@ -11,7 +11,9 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
+	"gofr.dev/pkg/gofr/http/middleware"
 )
 
 const (
@@ -66,6 +68,23 @@ func (r *Request) Bind(i interface{}) error {
 		}
 
 		return json.Unmarshal(body, &i)
+	case "application/x-www-form-urlencoded":
+		err := r.req.ParseForm()
+		if err != nil {
+			return err
+		}
+
+		m := make(map[string]interface{}, 0)
+		for k, v := range r.req.Form {
+			m[k] = v[len(v)-1]
+		}
+
+		jsonString, err := json.Marshal(m)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		return json.Unmarshal(jsonString, &i)
 	case "multipart/form-data":
 		return r.bindMultipart(i)
 	}
@@ -132,4 +151,28 @@ func (r *Request) bindMultipart(ptr any) error {
 	}
 
 	return nil
+}
+
+func (r *Request) Header(key string) string {
+	return r.req.Header.Get(key)
+}
+
+func (r *Request) GetClaims() map[string]interface{} {
+	claims, ok := r.req.Context().Value(middleware.JWTClaim("JWTClaims")).(jwt.MapClaims)
+	if !ok {
+		return nil
+	}
+
+	return claims
+}
+
+func (r *Request) GetClaim(claimKey string) interface{} {
+	claims := r.GetClaims()
+
+	val, ok := claims[claimKey]
+	if !ok {
+		return nil
+	}
+
+	return val
 }

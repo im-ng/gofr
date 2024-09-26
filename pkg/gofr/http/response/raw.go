@@ -1,5 +1,8 @@
 package response
 
+import "net/http"
+
 type Raw struct {
-	Data interface{}
+	Data   interface{}
+	Cookie *http.Cookie
 }

@@ -17,3 +17,5 @@ func (*Responder) Respond(data interface{}, err error) {
 		fmt.Fprintln(os.Stderr, err)
 	}
 }
+
+func (*Responder) Header(key, value string) {}
